@@ -1,0 +1,16 @@
+# Môi trường render. Python 3.10-3.12.
+#   python -m venv .venv
+#   .venv\Scripts\pip install -r requirements.txt
+#   .venv\Scripts\pip install --no-deps pyrender     # pyrender pin PyOpenGL 3.1.0 (lỗi) nên cài no-deps
+trimesh
+pyglet
+freetype-py
+imageio
+six
+PyOpenGL==3.1.7
+numpy
+pillow
+opencv-python-headless
+scipy
+networkx
+matplotlib
