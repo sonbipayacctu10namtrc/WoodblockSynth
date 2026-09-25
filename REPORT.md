@@ -631,11 +631,22 @@ thư mục mesh và các thư mục ngang hàng, nên không tới được `tex
 Kiểm tra thêm: bố cục thư mục cũ vẫn tìm đúng texture; hai scan chung một dataset không nhặt nhầm texture của nhau;
 manifest ghi tên texture vẫn tìm được ở bố cục lồng; bộ kiểm thử tìm mặt khắc 13/13 đạt (mục 4.3).
 
-**Bản đã sửa chưa chạy lại trên Kaggle.**
+**Chạy lại trên Kaggle (25/09) với bản đã sửa: hết lỗi ảnh xám.**
 
-**Render chậm trên Kaggle:** 126 s cho 24 ảnh (~5 s/ảnh, gồm cả nạp mesh), trong khi máy local chỉ ~0,55 s/ảnh. Nghi ngờ
-EGL trên Kaggle render bằng CPU (`llvmpipe`) thay vì GPU T4, **chưa xác nhận**. Notebook hiện in tên GPU mà OpenGL dùng để
-kiểm tra điều này ở lần chạy tới.
+![Render hướng A trên Kaggle sau khi sửa](assets/h11_kaggle_render_sau_khi_sua.jpg)
+
+*Hình 11: 16/24 ảnh hướng A của lần chạy lại trên Kaggle: texture gỗ và vết mực hiện đúng ở mọi kiểu chụp.*
+
+| Kiểm tra | Kết quả trên Kaggle |
+|---|---|
+| Soát mặt khắc | tìm được texture rời (`has_texture = True`); mặt `C-`, tin cậy, 8,7× (0,220 mm so với 0,025 mm), giống máy local |
+| Hướng A | đủ 24 ảnh 1600 × 1200, có màu gỗ; kiểu chụp: handheld 9, topdown 7, closeup 7, raking 1; demo vật che 8 ảnh |
+| Hướng B | trùng máy local: 0,321 mm/px, ảnh 597 × 625; pixel có dữ liệu 98,8 % / 93,9 % / 84,0 % ở 90° / 70° / 50° |
+
+**Tốc độ render trên Kaggle: chưa kiểm được.** Lần chạy đầu mất 126 s cho 24 ảnh (~5 s/ảnh, gồm cả nạp mesh), trong khi
+máy local chỉ ~0,55 s/ảnh. Nghi ngờ EGL trên Kaggle render bằng CPU (`llvmpipe`) thay vì GPU T4. Notebook có in tên GPU
+mà OpenGL dùng và thời gian mỗi ảnh, nhưng các dòng này nằm trong log của notebook, không có trong `outputs.zip`, nên
+lần chạy lại chưa cho câu trả lời.
 
 ---
 
@@ -670,7 +681,8 @@ kiểm tra điều này ở lần chạy tới.
 
 ## 10. Việc tiếp theo
 
-1. **Chạy lại notebook trên Kaggle** để xác nhận bản sửa texture và xem GPU mà OpenGL thực sự dùng.
+1. **Xem log notebook trên Kaggle** (cell cấu hình và cell hướng A) để biết GPU mà OpenGL thực sự dùng và thời gian
+   mỗi ảnh. Bản sửa texture đã được xác nhận trên Kaggle.
 2. **Tìm thêm scan**, ưu tiên khối có chữ. Đã có vài scan khối in có chữ được chia sẻ công khai làm ứng viên; các trang
    này thường bắt đăng nhập nên phải tải tay. Có thêm scan thì chạy `audit_scans.py` để hiệu chỉnh ngưỡng.
 3. **Nếu có scan mộc bản Hán-Nôm**, cần nhãn chữ cho ảnh render. Hướng khả thi: gắn nhãn một lần trên ảnh nhìn thẳng (ảnh

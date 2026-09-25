@@ -132,7 +132,8 @@ Mỗi dòng dưới đây từng là một lỗi thật trên scan thật (chi t
 - `assets/`: bản đã nén của các hình dùng trong README và REPORT (có commit, không in tên dữ liệu). Tên `hNN_*.jpg|png`
   với NN trùng số "Hình N" trong REPORT; PNG lớn hơn ~300 KB thì nén sang JPG (quality 88). README và REPORT chỉ nhúng
   ảnh từ `assets/`. Thêm hình giữa chừng thì đánh số lại cho khớp.
-- Không commit `.venv/`, `outputs/`, `figures/`, `__pycache__/`, scan (kể cả file zip) hay kết quả chạy.
+- `outputs/`: kết quả chạy (kể cả `outputs.zip` tải từ Kaggle), chỉ ở máy; repo chỉ giữ `outputs/.gitkeep`.
+- Không commit `.venv/`, nội dung `outputs/`, `figures/`, `__pycache__/`, scan (kể cả file zip) hay kết quả chạy.
 - Commit và push: **không** thêm dòng `Co-Authored-By` của Claude; tác giả chỉ là người dùng.
 - Không gọi các nhánh cũ "A1/A2/A3" (đã bỏ). Chỉ dùng "bước chung", "hướng A", "hướng B".
 - Xoá file: không xoá vĩnh viễn; chuyển sang một thư mục chờ xoá ngoài repo để người dùng tự xoá.

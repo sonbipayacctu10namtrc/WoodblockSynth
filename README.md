@@ -43,6 +43,7 @@ WoodblockSynth/
 │   ├── build_notebook.py            sinh notebook từ src/core
 │   └── notebook_docs.py             giải thích từng hàm, chèn vào notebook
 ├── input/                     nơi đặt scan tải về (không đưa lên repo)
+├── outputs/                   kết quả chạy script / outputs.zip từ Kaggle (chỉ ở máy; trên repo để trống)
 ├── figures/                   hình gốc sinh ra khi chạy (output, chỉ ở máy; trên repo để trống)
 ├── assets/                    ảnh đã nén cho README và REPORT
 ├── REPORT.md                  báo cáo phương pháp và kết quả
