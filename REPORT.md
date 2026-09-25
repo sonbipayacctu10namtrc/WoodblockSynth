@@ -248,7 +248,9 @@ Rasterize bằng OpenGL (pyrender), vật liệu PBR, bóng đổ bằng shadow 
 | Mặt bàn (cố định) | rộng gấp 4 lần khối, dày 1 mm | Hứng bóng đổ ở mọi góc đèn |
 | Camera (cố định) | `znear` 5 mm, `zfar` 5000 mm | Bao trọn mọi khoảng cách chụp |
 
-**Tốc độ:** nạp scan 1,42 triệu tam giác mất 17–23 s. Mỗi ảnh 1600 × 1200 render mất khoảng 0,6 s trên GTX 1660 Ti.
+**Tốc độ (máy local):** nạp scan 1,42 triệu tam giác mất 17–23 s. Mỗi ảnh 1600 × 1200 render mất khoảng 0,6 s. Lưu ý:
+máy có GTX 1660 Ti nhưng `run_info.json` cho thấy OpenGL thực ra chạy trên GPU tích hợp **Intel UHD 630**; con số này là
+của GPU tích hợp. Đo lại có tách thời gian dựng cảnh: dựng cảnh 1,8 s, render 0,93 s/ảnh ở 800 × 600.
 
 Texture được gắn qua `TextureVisuals(uv, image)`, vì pyrender không đọc `PBRMaterial` của trimesh 5.
 
@@ -551,7 +553,7 @@ flowchart TD
 | 4b. Nạp + soát | Nạp **mỗi scan một lần** vào `SCANS`, soát mặt khắc, xoay mặt khắc lên +Z, ghi `audit.csv` |
 | 5. Hướng A | Render `N_SHOTS` ảnh mỗi scan, in thời gian mỗi ảnh; demo vật che |
 | 6. Hướng B | Kiểm chứng giải tích, chiếu nhiều góc, zoom, 6 phương pháp, lưới so sánh, xuất hàng loạt |
-| 7. Đóng gói | `outputs.zip` và thống kê |
+| 7. Đóng gói | `run_info.json` (GPU, OpenGL, thời gian từng bước) + `outputs.zip` và thống kê |
 
 Nạp mỗi scan một lần tiết kiệm khoảng 40 s cho mỗi scan OBJ cỡ 1,42 triệu tam giác. Trước đây scan bị nạp lại ở cả ba
 bước soát, A và B, mỗi lần ~20 s.
@@ -644,9 +646,12 @@ manifest ghi tên texture vẫn tìm được ở bố cục lồng; bộ kiểm
 | Hướng B | trùng máy local: 0,321 mm/px, ảnh 597 × 625; pixel có dữ liệu 98,8 % / 93,9 % / 84,0 % ở 90° / 70° / 50° |
 
 **Tốc độ render trên Kaggle: chưa kiểm được.** Lần chạy đầu mất 126 s cho 24 ảnh (~5 s/ảnh, gồm cả nạp mesh), trong khi
-máy local chỉ ~0,55 s/ảnh. Nghi ngờ EGL trên Kaggle render bằng CPU (`llvmpipe`) thay vì GPU T4. Notebook có in tên GPU
-mà OpenGL dùng và thời gian mỗi ảnh, nhưng các dòng này nằm trong log của notebook, không có trong `outputs.zip`, nên
-lần chạy lại chưa cho câu trả lời.
+máy local chỉ ~0,55 s/ảnh. Nghi ngờ EGL trên Kaggle render bằng CPU (`llvmpipe`) thay vì GPU T4. Lần chạy lại chưa trả
+lời được vì tên GPU và thời gian mỗi ảnh khi đó chỉ được in ra log, không được lưu.
+
+Notebook giờ ghi các số đo này vào **`run_info.json`** trong `outputs.zip`: danh sách GPU (`nvidia-smi`), renderer của
+OpenGL và cờ `opengl_on_cpu`, thời gian nạp + soát từng scan, thời gian dựng cảnh và render tách riêng (`s_per_image`),
+thời gian xuất hàng loạt hướng B và tổng thời gian. Đã chạy thử trọn notebook ở máy local: không lỗi, file được ghi đúng.
 
 ---
 
@@ -681,8 +686,8 @@ lần chạy lại chưa cho câu trả lời.
 
 ## 10. Việc tiếp theo
 
-1. **Xem log notebook trên Kaggle** (cell cấu hình và cell hướng A) để biết GPU mà OpenGL thực sự dùng và thời gian
-   mỗi ảnh. Bản sửa texture đã được xác nhận trên Kaggle.
+1. **Chạy lại notebook trên Kaggle** rồi đọc `run_info.json` trong `outputs.zip` để biết OpenGL dùng GPU T4 hay CPU
+   (`opengl_on_cpu`) và thời gian render mỗi ảnh. Bản sửa texture đã được xác nhận trên Kaggle.
 2. **Tìm thêm scan**, ưu tiên khối có chữ. Đã có vài scan khối in có chữ được chia sẻ công khai làm ứng viên; các trang
    này thường bắt đăng nhập nên phải tải tay. Có thêm scan thì chạy `audit_scans.py` để hiệu chỉnh ngưỡng.
 3. **Nếu có scan mộc bản Hán-Nôm**, cần nhãn chữ cho ảnh render. Hướng khả thi: gắn nhãn một lần trên ảnh nhìn thẳng (ảnh

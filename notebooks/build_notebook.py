@@ -389,6 +389,20 @@ if GL:
     print(f"OpenGL: {GL['renderer']} | {GL['vendor']} | {GL['version']}")
     if any(k in GL["renderer"].lower() for k in ("llvmpipe", "softpipe", "swiftshader", "software")):
         print("CẢNH BÁO: OpenGL đang render bằng CPU (không tới được driver GPU) -> phần A sẽ chậm hơn nhiều.")
+
+# mọi số đo của lần chạy -> outputs/run_info.json (nằm trong outputs.zip, khỏi phải chép log)
+try:
+    _gpus = subprocess.run(["nvidia-smi", "-L"], capture_output=True, text=True, timeout=10).stdout.strip().splitlines()
+except Exception:
+    _gpus = []
+RUN_INFO = {"started": time.strftime("%Y-%m-%d %H:%M:%S"), "platform": platform.platform(), "python": sys.version.split()[0],
+            "gpus": _gpus, "opengl": GL, "egl_ok": EGL_OK,
+            "opengl_on_cpu": bool(GL) and any(k in GL["renderer"].lower()
+                                              for k in ("llvmpipe", "softpipe", "swiftshader", "software")),
+            "config": {"TARGET_MM": TARGET_MM, "RUN_A": RUN_A, "RENDER_W": RENDER_W, "RENDER_H": RENDER_H,
+                       "N_SHOTS": N_SHOTS, "PRESET": PRESET, "OCCLUDER_PROB": OCCLUDER_PROB},
+            "scans": {}}
+T_START = time.time()
 """)
 
 # =====================================================================================================
@@ -454,6 +468,8 @@ for p in meshes:
         img = depth_pair_image(mesh_o)
     tex = mesh_o.metadata.get("source_texture")
     SCANS[p.name] = {"path": p, "mesh": mesh_o, "info": info, "texture": tex}
+    RUN_INFO["scans"][p.name] = {"load_s": round(t_load, 2), "load_audit_s": round(time.time() - t0, 2),
+                                 "face": info["face"], "confident": info["confident"], "has_texture": info["has_texture"]}
     tex_msg = (f"rời {Path(tex).name}" if tex else "nhúng sẵn") if info["has_texture"] else \
         "KHÔNG CÓ -> ảnh phần A sẽ ra màu xám (thêm ảnh texture vào dataset hoặc ghi cột texture trong manifest)"
     print(f"[{'OK ' if info['confident'] else 'XEM'}] {p.name}: mặt {info['face']} — {info['reason']} "
@@ -499,12 +515,18 @@ else:
         bw, bh = s_["mesh"].metadata["block_size_mm"][:2]
         t0 = time.time()
         be = PyrenderBackend(s_["mesh"], RENDER_W, RENDER_H)
+        t_init = time.time() - t0
         recs = render_dataset(be, OUT_A / stem, N_SHOTS, (bw, bh), RENDER_W, RENDER_H, preset=PRESET, seed=3,
                               name=stem, occluder_prob=OCCLUDER_PROB,
                               extra_meta={"source_mesh": name_, "face_info": info})
         be.close()
         dt = time.time() - t0
-        print(f"{name_}: {N_SHOTS} ảnh {RENDER_W}×{RENDER_H} trong {dt:.0f}s ({dt / N_SHOTS:.2f} s/ảnh)")
+        t_render = dt - t_init
+        print(f"{name_}: {N_SHOTS} ảnh {RENDER_W}×{RENDER_H} trong {dt:.0f}s "
+              f"(dựng cảnh {t_init:.1f}s + render {t_render:.0f}s = {t_render / N_SHOTS:.2f} s/ảnh)")
+        RUN_INFO["scans"][name_]["render_A"] = {"n": N_SHOTS, "size": [RENDER_W, RENDER_H], "init_s": round(t_init, 2),
+                                                "render_s": round(t_render, 2),
+                                                "s_per_image": round(t_render / N_SHOTS, 3)}
         sheet = contact_sheet([OUT_A / stem / r["file"] for r in recs[:16]], cols=4, thumb_w=420)
         cv2.imwrite(str(OUT_A / f"{stem}_sheet.jpg"), sheet); show(OUT_A / f"{stem}_sheet.jpg", figsize=(18, 14))
 """)
@@ -978,14 +1000,19 @@ for name_, s_ in SCANS.items():
                                    "valid_frac": float(P["valid"].mean())})
     (d_ / "batch_meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"{name_}: {len(meta['images'])} ảnh ({time.time() - t0:.0f}s)")
+    RUN_INFO["scans"][name_]["batch_B"] = {"n": len(meta["images"]), "s": round(time.time() - t0, 2)}
 """)
 
 # =====================================================================================================
 # Đóng gói
 # =====================================================================================================
-md("---\n## 7. Đóng gói kết quả\n`outputs.zip` gồm `soat/`, `A_render/` (nếu phần A chạy) và `B_enhance/`.")
+md("---\n## 7. Đóng gói kết quả\n`outputs.zip` gồm `soat/`, `A_render/` (nếu phần A chạy), `B_enhance/` và `run_info.json` "
+   "(GPU, OpenGL, thời gian nạp / render / xuất hàng loạt của từng scan).")
 
 code(r"""
+RUN_INFO["total_s"] = round(time.time() - T_START, 1)
+(OUT / "run_info.json").write_text(json.dumps(RUN_INFO, ensure_ascii=False, indent=1), encoding="utf-8")
+print(json.dumps({k: RUN_INFO[k] for k in ("gpus", "opengl", "opengl_on_cpu", "total_s")}, ensure_ascii=False, indent=1))
 shutil.make_archive("/kaggle/working/outputs", "zip", OUT)
 for sub in (OUT_SOAT, OUT_A, OUT_B):
     files = [q for q in sub.rglob("*") if q.is_file()]

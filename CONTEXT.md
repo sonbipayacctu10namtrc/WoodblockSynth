@@ -48,7 +48,7 @@ Phần OCR (huấn luyện, đánh giá) **không** nằm ở đây.
 | Tự tìm mặt khắc bằng **so sánh tương đối** giữa các mặt, kèm độ tin cậy, luôn có đường chỉ định tay | Phải chạy được trên scan bất kỳ, không biết trước đơn vị hay hướng; khi không chắc thì người soát thay vì render sai mặt. |
 | Hai hướng A và B song song | A giống ảnh chụp nhưng phụ thuộc đèn (đèn thấp là mất nét); B không phụ thuộc đèn, đọc nét trực tiếp từ hình học. |
 | Góc camera hướng A không dưới 45° | Góc thấp làm mặt khắc co ngắn, bóng che nhiều; thực nghiệm với A1 cho recall ≈ 0 ở ≤ 50°. |
-| Chạy chính trên **Kaggle** | Có GPU miễn phí cho hướng A. Máy local (GTX 1660 Ti) dùng để thử nhanh. |
+| Chạy chính trên **Kaggle** | Có GPU miễn phí cho hướng A. Máy local dùng để thử nhanh (OpenGL ở đó chạy trên GPU tích hợp Intel UHD 630, không phải GTX 1660 Ti). |
 | Notebook **sinh từ code**, mỗi hàm một cell kèm giải thích | Đọc hiểu từng bước ngay trong notebook, và code local với notebook không bao giờ lệch nhau (builder so AST). |
 | Tên file `sNN_` theo thứ tự pipeline | Mở thư mục là thấy luồng xử lý; lỗi ở mục nào của notebook thì biết mở file nào. |
 
@@ -57,7 +57,8 @@ Phần OCR (huấn luyện, đánh giá) **không** nằm ở đây.
 - Pipeline chạy trọn vẹn ở máy local, có GPU hay không có GPU đều được. 20/20 bài kiểm giải tích đạt.
 - Chạy lại trên Kaggle (25/09) với bản đã sửa: **hết lỗi ảnh xám**; soát mặt khắc và số liệu hướng B trùng máy local.
 - Render trên Kaggle chậm (~5 s/ảnh ở lần chạy đầu, so với ~0,6 s ở local). Nghi EGL đang render bằng CPU (`llvmpipe`),
-  **chưa xác nhận**: tên GPU và thời gian mỗi ảnh nằm trong log notebook, không có trong `outputs.zip`.
+  **chưa xác nhận**. Notebook giờ ghi GPU, renderer OpenGL và thời gian từng bước vào `run_info.json` trong
+  `outputs.zip`; lần chạy Kaggle tới sẽ trả lời câu hỏi này.
 
 ## 6. Câu hỏi còn mở
 

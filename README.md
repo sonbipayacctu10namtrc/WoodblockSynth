@@ -118,7 +118,8 @@ python tests/check_face_detection.py --mesh input/<tên_scan> --k 6
 Các lệnh trên dùng `python` của `.venv`: kích hoạt venv trước, hoặc gọi thẳng `.venv\Scripts\python` (Windows) hay
 `.venv/bin/python` (Linux).
 
-Nạp scan 1,42 triệu tam giác mất khoảng 20 s. Sau đó mỗi ảnh render mất khoảng 0,6–0,8 s trên GTX 1660 Ti.
+Nạp scan 1,42 triệu tam giác mất khoảng 20 s. Sau đó mỗi ảnh render mất khoảng 0,6–0,9 s (đo trên GPU tích hợp Intel
+UHD 630; trên laptop có hai GPU, OpenGL có thể không chạy trên GPU rời).
 
 ## Chạy trên Kaggle (đủ cả hướng A và B)
 
@@ -130,7 +131,8 @@ Nạp scan 1,42 triệu tam giác mất khoảng 20 s. Sau đó mỗi ảnh rend
 4. **Add Input → Datasets → Your Datasets** → chọn dataset vừa tạo.
 5. Settings: **Accelerator = GPU (T4)**, **Internet = On** (để cài gói còn thiếu).
 6. **Run All**. Kết quả nằm ở `/kaggle/working/outputs.zip`:
-   `soat/` (ảnh soát + `audit.csv`), `A_render/` (ảnh + meta), `B_enhance/` (ảnh tăng cường).
+   `soat/` (ảnh soát + `audit.csv`), `A_render/` (ảnh + meta), `B_enhance/` (ảnh tăng cường), `run_info.json` (GPU,
+   OpenGL đang dùng, thời gian nạp / render / xuất hàng loạt).
 
 Mọi tham số (số ảnh, độ phân giải, kiểu chụp, bán kính AO…) nằm ở **cell cấu hình**, mục 3 của notebook. Không bật GPU thì
 notebook tự bỏ qua hướng A, hướng B vẫn chạy đủ.
