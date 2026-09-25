@@ -37,7 +37,7 @@ Phần OCR (huấn luyện, đánh giá) **không** nằm ở đây.
 | 16–22/09 | Trên ảnh render của A1, PP-OCRv6 đọc được khi góc chụp dễ (recall ~0,7), gần như **không đọc được khi góc camera ≤ 50°**, và rất nhạy với **mòn một phần nét**. Đây là lý do hướng A giữ góc camera ≥ 45°. |
 | 23/09 | Quyết định **bỏ A1 và A2**, chỉ giữ scan thật, và không cần đánh giá OCR trong nhánh này. Khi chạy trên scan thật, phát hiện: scan đặt nghiêng (AABB chọn sai trục), ma trận hoán trục lật gương, không phân biệt mặt khắc với mặt lưng. Từ đó sinh ra `prepare_scan` / `detect_main_face` / `orient_to_face`. Hướng B chuyển sang scan thật và lộ ra lỗi hố giả của phép rải điểm; thay bằng rasterize tam giác. |
 | 24/09 | Gộp hai notebook (render và tăng cường) thành **một** notebook Kaggle. Chạy thật lần đầu trên Kaggle (2 × T4): hướng B đúng, nhưng **ảnh hướng A toàn màu xám** do zip lồng làm lạc đường dẫn texture; đã sửa. Notebook viết lại thành mỗi hàm một cell kèm giải thích. |
-| 25/09 | Tách khỏi project OCR cũ (`OCRMocBan`): bỏ toàn bộ code OCR và tiền xử lý; tái cấu trúc thành `src/` · `tests/` · `notebooks/`; tách module thành các file `sNN_` theo thứ tự pipeline; gộp ba báo cáo thành `REPORT.md`; đặt tên **WoodblockSynth**. Chạy lại notebook trên Kaggle: hết ảnh xám, số liệu hướng B trùng máy local. |
+| 25/09 | Tách khỏi project OCR cũ (`OCRMocBan`): bỏ toàn bộ code OCR và tiền xử lý; tái cấu trúc thành `src/` · `tests/` · `notebooks/`; tách module thành các file `sNN_` theo thứ tự pipeline; gộp ba báo cáo thành `REPORT.md`; đặt tên **WoodblockSynth**. Chạy lại notebook trên Kaggle: hết ảnh xám, số liệu hướng B trùng máy local. Lần chạy sau có `run_info.json`: xác nhận OpenGL trên Kaggle chạy bằng CPU (`llvmpipe`), 4,42 s/ảnh. |
 
 ## 4. Các quyết định thiết kế và lý do
 
@@ -56,9 +56,8 @@ Phần OCR (huấn luyện, đánh giá) **không** nằm ở đây.
 
 - Pipeline chạy trọn vẹn ở máy local, có GPU hay không có GPU đều được. 20/20 bài kiểm giải tích đạt.
 - Chạy lại trên Kaggle (25/09) với bản đã sửa: **hết lỗi ảnh xám**; soát mặt khắc và số liệu hướng B trùng máy local.
-- Render trên Kaggle chậm (~5 s/ảnh ở lần chạy đầu, so với ~0,6 s ở local). Nghi EGL đang render bằng CPU (`llvmpipe`),
-  **chưa xác nhận**. Notebook giờ ghi GPU, renderer OpenGL và thời gian từng bước vào `run_info.json` trong
-  `outputs.zip`; lần chạy Kaggle tới sẽ trả lời câu hỏi này.
+- **Đã xác nhận: trên Kaggle, OpenGL render bằng CPU** (`llvmpipe`) dù máy có 2 × T4: 4,42 s/ảnh 1600 × 1200, so với
+  ~0,6 s ở máy local. Số đo lấy từ `run_info.json` mà notebook ghi vào `outputs.zip`.
 
 ## 6. Câu hỏi còn mở
 
@@ -72,6 +71,8 @@ Phần OCR (huấn luyện, đánh giá) **không** nằm ở đây.
    kiểm chứng.
 5. **Vật che** còn là hình học đơn giản; có nên thay bằng patch cắt từ ảnh thật hay không.
 6. **Cách dùng đầu ra hướng B** khi huấn luyện: làm kênh phụ, làm ảnh tiền xử lý, hay làm ảnh huấn luyện riêng.
+7. **EGL trên Kaggle không dùng được T4**: container thiếu thư viện EGL của NVIDIA, hay không được cấp quyền đồ hoạ? Nếu
+   không sửa được thì sinh số lượng lớn ảnh hướng A ở đâu.
 
 ## 7. Thuật ngữ
 

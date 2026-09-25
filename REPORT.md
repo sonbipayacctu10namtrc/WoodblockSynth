@@ -645,13 +645,21 @@ manifest ghi tên texture vẫn tìm được ở bố cục lồng; bộ kiểm
 | Hướng A | đủ 24 ảnh 1600 × 1200, có màu gỗ; kiểu chụp: handheld 9, topdown 7, closeup 7, raking 1; demo vật che 8 ảnh |
 | Hướng B | trùng máy local: 0,321 mm/px, ảnh 597 × 625; pixel có dữ liệu 98,8 % / 93,9 % / 84,0 % ở 90° / 70° / 50° |
 
-**Tốc độ render trên Kaggle: chưa kiểm được.** Lần chạy đầu mất 126 s cho 24 ảnh (~5 s/ảnh, gồm cả nạp mesh), trong khi
-máy local chỉ ~0,55 s/ảnh. Nghi ngờ EGL trên Kaggle render bằng CPU (`llvmpipe`) thay vì GPU T4. Lần chạy lại chưa trả
-lời được vì tên GPU và thời gian mỗi ảnh khi đó chỉ được in ra log, không được lưu.
+**Tốc độ render trên Kaggle: OpenGL đang chạy trên CPU.** Notebook ghi mọi số đo vào **`run_info.json`** trong
+`outputs.zip` (GPU theo `nvidia-smi`, renderer OpenGL, thời gian từng bước). Lần chạy 25/09:
 
-Notebook giờ ghi các số đo này vào **`run_info.json`** trong `outputs.zip`: danh sách GPU (`nvidia-smi`), renderer của
-OpenGL và cờ `opengl_on_cpu`, thời gian nạp + soát từng scan, thời gian dựng cảnh và render tách riêng (`s_per_image`),
-thời gian xuất hàng loạt hướng B và tổng thời gian. Đã chạy thử trọn notebook ở máy local: không lỗi, file được ghi đúng.
+| Số đo | Kaggle | Máy local |
+|---|---|---|
+| GPU của máy | 2 × Tesla T4 | GTX 1660 Ti + Intel UHD 630 |
+| Renderer OpenGL | **`llvmpipe` (Mesa, render bằng CPU)** | Intel UHD 630 (GPU tích hợp) |
+| Render hướng A, 1600 × 1200 | 24 ảnh: dựng cảnh 0,86 s + render 106 s = **4,42 s/ảnh** | ~0,6 s/ảnh |
+| Nạp scan / nạp + soát | 6,7 s / 18,4 s | 17–23 s / ~30 s |
+| Xuất hàng loạt hướng B (9 ảnh) | 6,2 s | 7,5 s |
+| Tổng thời gian notebook | 190 s | |
+
+Máy Kaggle có GPU (`nvidia-smi` thấy đủ 2 × T4), nhưng EGL không tới được driver đồ hoạ của NVIDIA, nên pyrender rơi
+về render phần mềm. Ảnh vẫn đúng, chỉ chậm khoảng 7 lần. Nguyên nhân cụ thể **chưa kiểm**: có thể container thiếu thư
+viện EGL của NVIDIA (`libEGL_nvidia`), hoặc chỉ được cấp quyền tính toán mà không có quyền đồ hoạ.
 
 ---
 
@@ -678,7 +686,8 @@ thời gian xuất hàng loạt hướng B và tổng thời gian. Đã chạy t
 3. **Chưa đo độ giống thật** của ảnh render so với ảnh chụp mộc bản thật (ví dụ so phân bố độ sáng, độ tương phản nét,
    phổ nhiễu với các bộ ảnh chụp thật).
 4. **Vật che còn là hình học đơn giản** (ellipse, dải màu), chưa phải patch cắt từ ảnh thật.
-5. Hướng A **bắt buộc GPU** (pyrender/EGL); không có renderer dự phòng.
+5. Hướng A cần OpenGL/EGL; không có renderer dự phòng. **Trên Kaggle, OpenGL đang chạy trên CPU (`llvmpipe`)** dù máy
+   có 2 × T4, nên render chậm ~4,4 s/ảnh. Với 24 ảnh mỗi scan thì chấp nhận được, nhưng sinh hàng nghìn ảnh sẽ rất lâu.
 6. Hàm chấm điểm mặt `_face_height` vẫn dùng rải điểm. Điều này chấp nhận được vì hàm chỉ lấy trung vị làm điểm số, và
    các bài kiểm của nó đều đạt. **Không dùng lại hàm này để tạo ảnh.**
 7. Các tham số mặc định của hướng B chọn theo nét hoa văn to và sâu 2,5 mm. Nét chữ Hán nhỏ và nông hơn, nên `MSII_RADII`
@@ -686,8 +695,10 @@ thời gian xuất hàng loạt hướng B và tổng thời gian. Đã chạy t
 
 ## 10. Việc tiếp theo
 
-1. **Chạy lại notebook trên Kaggle** rồi đọc `run_info.json` trong `outputs.zip` để biết OpenGL dùng GPU T4 hay CPU
-   (`opengl_on_cpu`) và thời gian render mỗi ảnh. Bản sửa texture đã được xác nhận trên Kaggle.
+1. **Cho EGL trên Kaggle dùng được GPU T4**, hoặc chấp nhận render bằng CPU. Việc đầu tiên: kiểm trong container xem có
+   `libEGL_nvidia` và file khai báo EGL vendor của NVIDIA không, và biến `NVIDIA_DRIVER_CAPABILITIES` có chứa `graphics`
+   không. Nếu container không có thư viện đồ hoạ thì không sửa được từ notebook; khi đó chỉ còn cách chia nhỏ việc sinh
+   ảnh, hoặc render ở máy có GPU.
 2. **Tìm thêm scan**, ưu tiên khối có chữ. Đã có vài scan khối in có chữ được chia sẻ công khai làm ứng viên; các trang
    này thường bắt đăng nhập nên phải tải tay. Có thêm scan thì chạy `audit_scans.py` để hiệu chỉnh ngưỡng.
 3. **Nếu có scan mộc bản Hán-Nôm**, cần nhãn chữ cho ảnh render. Hướng khả thi: gắn nhãn một lần trên ảnh nhìn thẳng (ảnh
